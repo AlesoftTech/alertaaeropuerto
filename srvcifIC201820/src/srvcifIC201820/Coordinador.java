@@ -7,6 +7,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.KeyPair;
 import java.security.Security;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Coordinador {
 
@@ -32,6 +34,11 @@ public class Coordinador {
 		keyPairServidor = Seg.grsa();
 		certSer = Seg.gc(keyPairServidor);
 		
+		
+		//crear pool 
+		int numeroDeTrheads = 2; 
+		ExecutorService execute = Executors.newFixedThreadPool(numeroDeTrheads); 
+		System.out.println(MAESTRO + "CREANDO POOL..." + "TAMANIO: " + numeroDeTrheads);
 		int idThread = 0;
 		// Crea el socket que escucha en el puerto seleccionado.
 		ss = new ServerSocket(ip);
@@ -40,9 +47,9 @@ public class Coordinador {
 			try { 
 				Socket sc = ss.accept();
 				System.out.println(MAESTRO + "Cliente " + idThread + " aceptado.");
-				Delegado3 d3 = new Delegado3(sc,idThread);
+				//Delegado3 d3 = new Delegado3(sc,idThread);
 				idThread++;
-				d3.start();
+				//d3.start();
 			} catch (IOException e) {
 				System.out.println(MAESTRO + "Error creando el socket cliente.");
 				e.printStackTrace();
