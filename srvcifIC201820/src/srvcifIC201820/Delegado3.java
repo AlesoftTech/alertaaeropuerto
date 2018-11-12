@@ -1,4 +1,4 @@
-package srvcifIC201820;
+ package srvcifIC201820;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -13,7 +13,7 @@ import java.util.Random;
 import javax.crypto.SecretKey;
 import javax.xml.bind.DatatypeConverter;
 
-public class Delegado3 extends Thread {
+public class Delegado3 implements Callable<Double[]> {
 	// Constantes
 	public static final String OK = "OK";
 	public static final String ALGORITMOS = "ALGORITMOS";
@@ -44,8 +44,11 @@ public class Delegado3 extends Thread {
 		}
 	}
 	
-	public void run() {
+	public Double[] call() {
+		
 		String linea;
+		Double[] result = new Double[4];
+		result[2] = 0.0;
 	    System.out.println(dlg + "Empezando atencion.");
 	        try {
 				PrintWriter ac = new PrintWriter(sc.getOutputStream() , true);
@@ -110,6 +113,8 @@ public class Delegado3 extends Thread {
 					throw new Exception(dlg + ERROR + REC + linea + "-terminando.");
 				}
 				System.out.println(dlg + "recibio-" + linea + "-OK, continuando.");
+						
+				long startTime = System.currentTimeMillis();
 
 				/***** Fase 5: Envia llave simetrica *****/
 				SecretKey simetrica = Seg.kgg(algoritmos[1]);
@@ -121,12 +126,18 @@ public class Delegado3 extends Thread {
 				/***** Fase 6: Confirma llave simetrica *****/
 				linea = dc.readLine();
 				byte[] llaveS = Seg.ad(
-						toByteArray(linea), Coordinador.keyPairServidor.getPrivate(), algoritmos[2]);
+						toByteArray(linea), CoordinadorSeguro.keyPairServidor.getPrivate(), algoritmos[2]);
 				if (!toHexString(llaveS).equals(toHexString(simetrica.getEncoded()))) {
 					ac.println(ERROR);
 					throw new Exception(dlg + ERROR + "Problema confirmando llave. terminando.");
 				}
 				ac.println(OK);
+				
+				long estimatedTime = System.currentTimeMillis() - startTime;
+				
+				result[0] = (double) estimatedTime;
+				
+				startTime = System.currentTimeMillis();
 				
 				/***** Fase 7: Lectura de la consulta *****/
 				linea = dc.readLine();				
@@ -137,6 +148,7 @@ public class Delegado3 extends Thread {
 				if (verificacion) {
 					System.out.println(dlg + "verificacion de integridad. -OK, continuando.");
 					boolean rta = esta(datos);
+					result[2] = 1.0;
 					if (rta) 
 					  ac.println(OK + ":DEBE");
 					else 
@@ -146,13 +158,47 @@ public class Delegado3 extends Thread {
 					throw new Exception(dlg + "Error en verificacion de integridad. -terminando.");
 				}
 				
+				estimatedTime = System.currentTimeMillis() - startTime;
+				
+				result[1] = (double) estimatedTime;
+				result[3] = getProcessCpuLoad();
+				
 		        sc.close();
 		        System.out.println(dlg + "Termino exitosamente.");
 				
 	        } catch (Exception e) {
 	          e.printStackTrace();
 	        }
+	        
+	        return result;
 	}
+	
+	public double cargaCPU() {
+		OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
+		// What % CPU load this current JVM is taking, from 0.0-1.0
+		System.out.println(osBean.getProcessCpuLoad());
+		return osBean.getProcessCpuLoad();
+	}
+	
+
+	public static double getProcessCpuLoad() throws Exception {
+
+	    MBeanServer mbs    = ManagementFactory.getPlatformMBeanServer();
+	    ObjectName name    = ObjectName.getInstance("java.lang:type=OperatingSystem");
+	    javax.management.AttributeList list = mbs.getAttributes(name, new String[]{ "ProcessCpuLoad" });
+
+	    if (list.isEmpty())     return Double.NaN;
+
+	    Attribute att = (Attribute)list.get(0);
+	    Double value  = (Double)att.getValue();
+
+	    // usually takes a couple of seconds before we get real values
+	    if (value == -1.0)      return Double.NaN;
+	    // returns a percentage value with 1 decimal point precision
+	    return value;
+	}
+	
+	
 	
 	private boolean esta(String inDato) {
 		int num = Integer.parseInt(inDato);
