@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="/Users/sarueda/cursos/ic/codigo/bcpg-jdk15on-155.jar"/>
+	<classpathentry kind="lib" path="/Users/sarueda/cursos/ic/codigo/bcpkix-jdk15on-155.jar"/>
+	<classpathentry kind="lib" path="/Users/sarueda/cursos/ic/codigo/bcprov-jdk15on-155.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
